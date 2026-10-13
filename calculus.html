@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Calculus Lab - MathVerse</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+
+<style>
+body {
+ margin:0;
+ background:#050505;
+ color:white;
+ font-family:'Poppins',sans-serif;
+}
+
+/* NAV */
+nav {
+ position:fixed;
+ top:0;
+ width:100%;
+ padding:15px 30px;
+ display:flex;
+ justify-content:space-between;
+ background:rgba(0,0,0,0.6);
+ backdrop-filter:blur(10px);
+}
+
+nav h2 {
+ font-family:'Orbitron';
+ color:#00ffff;
+}
+
+nav a {
+ color:white;
+ margin-left:15px;
+ text-decoration:none;
+}
+
+/* PANEL */
+#panel {
+ position:absolute;
+ top:80px;
+ left:20px;
+ width:280px;
+ padding:20px;
+ border-radius:15px;
+ background:rgba(255,255,255,0.08);
+ backdrop-filter:blur(15px);
+ box-shadow:0 0 25px rgba(0,255,255,0.3);
+}
+
+input,button {
+ width:100%;
+ margin-top:10px;
+ padding:8px;
+ border-radius:8px;
+ border:none;
+}
+
+input {
+ background:black;
+ color:#00ffff;
+ border:1px solid #00ffff;
+}
+
+button {
+ background:linear-gradient(135deg,#00ffff,#0072ff);
+ color:white;
+ cursor:pointer;
+}
+
+/* INFO */
+#info {
+ margin-top:10px;
+ font-size:13px;
+ color:#00ffff;
+}
+
+canvas {
+ display:block;
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+<h2>📊 Calculus Lab</h2>
+<div>
+<a href="index.html">Home</a>
+<a href="surface.html">3D Lab</a>
+</div>
+</nav>
+
+<div id="panel">
+<label>Function f(x)</label>
+<input id="func" value="sin(x)">
+
+<label>Point (x)</label>
+<input type="range" id="slider" min="-5" max="5" step="0.05" value="1">
+
+<button onclick="toggleAnim()">Start / Stop Animation</button>
+
+<div id="info"></div>
+</div>
+
+<canvas id="c"></canvas>
+
+<script>
+
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+function resize(){
+ canvas.width = window.innerWidth;
+ canvas.height = window.innerHeight;
+}
+resize();
+window.onresize = resize;
+
+const funcInput = document.getElementById("func");
+const slider = document.getElementById("slider");
+const info = document.getElementById("info");
+
+const scale = 60;
+
+let anim = false;
+
+// SMART PARSER
+function parseExpr(expr){
+ return expr
+  .replace(/sin/g,"Math.sin")
+  .replace(/cos/g,"Math.cos")
+  .replace(/tan/g,"Math.tan")
+  .replace(/exp/g,"Math.exp")
+  .replace(/log/g,"Math.log")
+  .replace(/sqrt/g,"Math.sqrt")
+  .replace(/\^/g,"**");
+}
+
+// FUNCTION
+function f(x){
+ try {
+  let expr = parseExpr(funcInput.value);
+  return Function("x","return "+expr)(x);
+ } catch {
+  return 0;
+ }
+}
+
+// DERIVATIVE
+function derivative(x){
+ let h = 0.0001;
+ return (f(x+h)-f(x-h))/(2*h);
+}
+
+// DRAW
+function draw(){
+
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ let ox = canvas.width/2;
+ let oy = canvas.height/2;
+
+ // AXES
+ ctx.strokeStyle="#333";
+ ctx.beginPath();
+ ctx.moveTo(0,oy);
+ ctx.lineTo(canvas.width,oy);
+ ctx.moveTo(ox,0);
+ ctx.lineTo(ox,canvas.height);
+ ctx.stroke();
+
+ // GRAPH (NEON)
+ ctx.strokeStyle="#00ffff";
+ ctx.lineWidth=2;
+ ctx.shadowBlur=10;
+ ctx.shadowColor="#00ffff";
+
+ ctx.beginPath();
+
+ for(let px=0; px<canvas.width; px+=2){
+  let x = (px-ox)/scale;
+  let y = f(x);
+  let py = oy - y*scale;
+
+  if(px===0) ctx.moveTo(px,py);
+  else ctx.lineTo(px,py);
+ }
+
+ ctx.stroke();
+ ctx.shadowBlur=0;
+
+ let xVal = parseFloat(slider.value);
+ let yVal = f(xVal);
+
+ // AREA UNDER CURVE
+ ctx.fillStyle="rgba(0,255,255,0.15)";
+ ctx.beginPath();
+
+ for(let x=0; x<=xVal; x+=0.05){
+  let px = ox + x*scale;
+  let py = oy - f(x)*scale;
+
+  if(x===0) ctx.moveTo(px,oy);
+  ctx.lineTo(px,py);
+ }
+
+ ctx.lineTo(ox + xVal*scale, oy);
+ ctx.closePath();
+ ctx.fill();
+
+ // TANGENT
+ let m = derivative(xVal);
+
+ ctx.strokeStyle="#ff00ff";
+ ctx.lineWidth=2;
+ ctx.beginPath();
+
+ for(let x=-5; x<=5; x+=0.1){
+  let y = yVal + m*(x-xVal);
+  let px = ox + x*scale;
+  let py = oy - y*scale;
+
+  if(x===-5) ctx.moveTo(px,py);
+  else ctx.lineTo(px,py);
+ }
+
+ ctx.stroke();
+
+ // POINT (GLOW)
+ ctx.fillStyle="#ff0000";
+ ctx.shadowBlur=15;
+ ctx.shadowColor="#ff0000";
+
+ ctx.beginPath();
+ ctx.arc(ox + xVal*scale, oy - yVal*scale,6,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.shadowBlur=0;
+
+ // INFO
+ info.innerHTML =
+  "f(x) = "+funcInput.value+"<br>"+
+  "x = "+xVal.toFixed(2)+"<br>"+
+  "f(x) = "+yVal.toFixed(2)+"<br>"+
+  "Slope (dy/dx) = "+m.toFixed(3);
+}
+
+// ANIMATION LOOP
+function animate(){
+ if(anim){
+  slider.value = parseFloat(slider.value) + 0.03;
+  if(slider.value > 5) slider.value = -5;
+ }
+
+ draw();
+ requestAnimationFrame(animate);
+}
+
+function toggleAnim(){
+ anim = !anim;
+}
+
+// LIVE UPDATE
+slider.oninput = draw;
+funcInput.oninput = draw;
+
+animate();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fractal Universe Lab</title>
+<style>
+body{margin:0; background:#050505; font-family:'Inter',sans-serif; color:white; text-align:center;}
+h1{margin-top:20px; font-size:50px; background:linear-gradient(90deg,#00aaff,#bb66ff,#ffd700); -webkit-background-clip:text; color:transparent;}
+.controls{display:flex; justify-content:center; flex-wrap:wrap; margin:15px;}
+input, select, button{margin:5px; padding:8px 12px; border-radius:10px; border:none; outline:none;}
+button{background:linear-gradient(90deg,#00aaff,#bb66ff); color:white; cursor:pointer; transition:0.3s;}
+button:hover{transform:scale(1.05);}
+canvas{display:block; margin:0 auto; border-radius:15px; box-shadow:0 0 30px rgba(0,150,255,0.5);}
+</style>
+</head>
+<body>
+
+<h1>Fractal Universe Lab</h1>
+
+<div class="controls">
+<label>Type:
+<select id="setType">
+<option value="mandelbrot">Mandelbrot</option>
+<option value="julia">Julia</option>
+</select></label>
+
+<label>Max Iterations: <input type="number" id="maxIter" value="200" min="50" max="1000"></label>
+<label>Zoom: <input type="range" id="zoom" min="50" max="500" value="200"></label>
+<label>Julia c: <input type="text" id="juliaC" value="-0.8+0.156i"></label>
+<button onclick="drawFractal()">Draw</button>
+</div>
+
+<canvas id="canvas" width="900" height="600"></canvas>
+
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+const width=canvas.width, height=canvas.height;
+
+// Convert complex string to {re, im}
+function parseComplex(str){
+  let match=str.match(/([+-]?[0-9.]+)([+-][0-9.]+)i/);
+  if(match) return {re:parseFloat(match[1]), im:parseFloat(match[2])};
+  return {re:-0.8, im:0.156};
+}
+
+function drawFractal(){
+  const type=document.getElementById('setType').value;
+  const maxIter=parseInt(document.getElementById('maxIter').value);
+  const zoom=document.getElementById('zoom').value/100;
+  const julia=parseComplex(document.getElementById('juliaC').value);
+
+  const img=ctx.createImageData(width,height);
+  const data=img.data;
+
+  for(let px=0; px<width; px++){
+    for(let py=0; py<height; py++){
+      let x0=(px-width/2)/(0.5*zoom*width);
+      let y0=(py-height/2)/(0.5*zoom*height);
+      let x=x0, y=y0;
+      let cx=(type==='mandelbrot')?x0:julia.re;
+      let cy=(type==='mandelbrot')?y0:julia.im;
+      let i=0;
+      while(i<maxIter && x*x + y*y <=4){
+        let xt=x*x - y*y + cx;
+        y=2*x*y + cy;
+        x=xt;
+        i++;
+      }
+      let color=i===maxIter?0:Math.floor(255*i/maxIter);
+      const idx=(py*width+px)*4;
+      data[idx]=color;           // R
+      data[idx+1]=Math.floor(color*0.3); // G
+      data[idx+2]=Math.floor(255-color*0.5); // B
+      data[idx+3]=255;
+    }
+  }
+  ctx.putImageData(img,0,0);
+}
+
+// Draw on page load
+drawFractal();
+</script>
+
+</body>
+</html>

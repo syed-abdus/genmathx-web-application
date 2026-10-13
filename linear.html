@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Linear Algebra Visualizer</title>
+
+<style>
+body {
+ margin:0;
+ background:black;
+ color:white;
+ font-family:sans-serif;
+ overflow:hidden;
+}
+
+#panel {
+ position:absolute;
+ top:20px;
+ left:20px;
+ background:rgba(0,0,0,0.7);
+ padding:15px;
+ border-radius:10px;
+ width:260px;
+}
+
+input {
+ width:100%;
+ margin-top:5px;
+ padding:5px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="panel">
+<h3>Matrix</h3>
+
+<input id="a" value="1">
+<input id="b" value="0">
+<input id="c" value="0">
+<input id="d" value="1">
+
+<h3>Vector</h3>
+<input id="vx" value="2">
+<input id="vy" value="1">
+
+</div>
+
+<canvas id="cvs"></canvas>
+
+<script>
+
+const canvas = document.getElementById("cvs");
+const ctx = canvas.getContext("2d");
+
+function resize(){
+ canvas.width = window.innerWidth;
+ canvas.height = window.innerHeight;
+}
+resize();
+window.onresize = resize;
+
+const scale = 50;
+
+// MATRIX APPLY
+function transform(x,y){
+ let a = parseFloat(aInput.value);
+ let b = parseFloat(bInput.value);
+ let c = parseFloat(cInput.value);
+ let d = parseFloat(dInput.value);
+
+ return [
+  a*x + b*y,
+  c*x + d*y
+ ];
+}
+
+const aInput = document.getElementById("a");
+const bInput = document.getElementById("b");
+const cInput = document.getElementById("c");
+const dInput = document.getElementById("d");
+
+const vxInput = document.getElementById("vx");
+const vyInput = document.getElementById("vy");
+
+// DRAW GRID
+function drawGrid(){
+
+ let ox = canvas.width/2;
+ let oy = canvas.height/2;
+
+ ctx.strokeStyle="#222";
+
+ for(let x=-10;x<=10;x++){
+  for(let y=-10;y<=10;y++){
+
+   let p1 = transform(x,y);
+   let p2 = transform(x+1,y);
+
+   ctx.beginPath();
+   ctx.moveTo(ox + p1[0]*scale, oy - p1[1]*scale);
+   ctx.lineTo(ox + p2[0]*scale, oy - p2[1]*scale);
+   ctx.stroke();
+
+   let p3 = transform(x,y+1);
+
+   ctx.beginPath();
+   ctx.moveTo(ox + p1[0]*scale, oy - p1[1]*scale);
+   ctx.lineTo(ox + p3[0]*scale, oy - p3[1]*scale);
+   ctx.stroke();
+  }
+ }
+}
+
+// DRAW VECTOR
+function drawVector(){
+
+ let ox = canvas.width/2;
+ let oy = canvas.height/2;
+
+ let vx = parseFloat(vxInput.value);
+ let vy = parseFloat(vyInput.value);
+
+ let t = transform(vx,vy);
+
+ ctx.strokeStyle="#00ffff";
+ ctx.lineWidth=3;
+
+ ctx.beginPath();
+ ctx.moveTo(ox,oy);
+ ctx.lineTo(ox + t[0]*scale, oy - t[1]*scale);
+ ctx.stroke();
+}
+
+// MAIN LOOP
+function draw(){
+
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ drawGrid();
+ drawVector();
+
+ requestAnimationFrame(draw);
+}
+
+draw();
+
+</script>
+
+</body>
+</html>

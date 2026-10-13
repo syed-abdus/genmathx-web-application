@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Optimization & AI Lab</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+ margin:0;
+ font-family:Inter;
+ background:#050505;
+ color:white;
+ text-align:center;
+}
+
+/* TITLE */
+h1{
+ margin-top:20px;
+ background:linear-gradient(90deg,#00aaff,#bb66ff,#ffd700);
+ -webkit-background-clip:text;
+ color:transparent;
+}
+
+/* CONTROLS */
+.controls{
+ margin:20px;
+}
+
+input{
+ padding:10px;
+ border-radius:10px;
+ border:none;
+ outline:none;
+ margin:5px;
+}
+
+/* CANVAS */
+canvas{
+ background:#111;
+ border-radius:20px;
+ margin-top:20px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Optimization & AI Lab</h1>
+
+<div class="controls">
+Learning Rate:
+<input type="number" id="lr" value="0.1" step="0.01">
+
+<button onclick="start()">Start</button>
+<button onclick="reset()">Reset</button>
+</div>
+
+<canvas id="chart" width="800" height="400"></canvas>
+
+<script>
+let x = 4;
+let lr = 0.1;
+let points = [];
+
+function f(x){
+ return x*x + 4*Math.sin(x);
+}
+
+function df(x){
+ return 2*x + 4*Math.cos(x);
+}
+
+let chart = new Chart(document.getElementById("chart"), {
+ type:"line",
+ data:{
+  labels:[],
+  datasets:[{
+   label:"Function",
+   data:[],
+   borderColor:"#00aaff",
+   fill:false
+  },{
+   label:"AI Path",
+   data:[],
+   borderColor:"#ff0044",
+   pointRadius:5
+  }]
+ },
+ options:{responsive:false}
+});
+
+function generateGraph(){
+ let labels = [];
+ let data = [];
+
+ for(let i=-10;i<=10;i+=0.1){
+  labels.push(i.toFixed(1));
+  data.push(f(i));
+ }
+
+ chart.data.labels = labels;
+ chart.data.datasets[0].data = data;
+ chart.update();
+}
+
+generateGraph();
+
+let interval;
+
+function start(){
+ lr = parseFloat(document.getElementById("lr").value);
+
+ interval = setInterval(()=>{
+  let y = f(x);
+
+  chart.data.datasets[1].data.push({x:x,y:y});
+
+  x = x - lr * df(x);
+
+  chart.update();
+
+ },500);
+}
+
+function reset(){
+ clearInterval(interval);
+ x = 4;
+ chart.data.datasets[1].data = [];
+ chart.update();
+}
+</script>
+
+</body>
+</html>

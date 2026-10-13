@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Real-World Math Engine</title>
+<style>
+body{
+ margin:0;
+ font-family:Inter,sans-serif;
+ background:#050505;
+ color:white;
+ text-align:center;
+ overflow:hidden;
+}
+h1{
+ margin-top:20px;
+ font-size:50px;
+ background:linear-gradient(90deg,#00aaff,#bb66ff,#ffd700);
+ -webkit-background-clip:text;
+ color:transparent;
+}
+#canvas{
+ background:#111;
+ display:block;
+ margin:30px auto;
+ border-radius:20px;
+ box-shadow:0 0 30px rgba(0,150,255,0.4);
+}
+.controls{
+ margin:20px;
+}
+input,select,button{
+ padding:10px;
+ border-radius:10px;
+ border:none;
+ outline:none;
+ margin:5px;
+}
+button{
+ cursor:pointer;
+ background:linear-gradient(90deg,#00aaff,#bb66ff);
+ color:white;
+ transition:0.3s;
+}
+button:hover{
+ transform:scale(1.05);
+}
+</style>
+</head>
+<body>
+
+<h1>Real-World Math Engine</h1>
+
+<div class="controls">
+Start:
+<select id="startNode"></select>
+End:
+<select id="endNode"></select>
+<button onclick="findPath()">Find Shortest Path</button>
+</div>
+
+<canvas id="canvas" width="900" height="500"></canvas>
+
+<script>
+// NODE SETUP (Example Trichy nodes)
+let nodes = {
+ "Junction":{x:100,y:100},
+ "Panjappur Bus Stand":{x:300,y:80},
+ "Palakkarai":{x:500,y:200},
+ "Kattur":{x:700,y:150},
+ "Dhanalakshmi Srinivasan University":{x:600,y:400},
+ "Chathram Bus Stand":{x:200,y:400}
+};
+
+// EDGES (undirected with weights)
+let edges = [
+ ["Junction","Panjappur Bus Stand",2],
+ ["Panjappur Bus Stand","Palakkarai",3],
+ ["Palakkarai","Kattur",2],
+ ["Kattur","Dhanalakshmi Srinivasan University",4],
+ ["Dhanalakshmi Srinivasan University","Chathram Bus Stand",5],
+ ["Chathram Bus Stand","Junction",6],
+ ["Palakkarai","Dhanalakshmi Srinivasan University",3]
+];
+
+// populate dropdowns
+let startSelect=document.getElementById("startNode");
+let endSelect=document.getElementById("endNode");
+Object.keys(nodes).forEach(n=>{
+ let opt=document.createElement("option"); opt.value=n; opt.innerText=n;
+ startSelect.appendChild(opt.cloneNode(true));
+ endSelect.appendChild(opt.cloneNode(true));
+});
+
+// CANVAS DRAW
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+// draw nodes
+function drawNodes(selectedNodes=[],pathEdges=[]){
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ // edges
+ edges.forEach(e=>{
+   ctx.beginPath();
+   ctx.moveTo(nodes[e[0]].x,nodes[e[0]].y);
+   ctx.lineTo(nodes[e[1]].x,nodes[e[1]].y);
+   ctx.lineWidth=3;
+   if(pathEdges.some(pe=>pe[0]===e[0]&&pe[1]===e[1]||pe[0]===e[1]&&pe[1]===e[0])){
+     ctx.strokeStyle="#00ffff"; // highlighted path
+   }else{
+     ctx.strokeStyle="rgba(255,255,255,0.2)";
+   }
+   ctx.shadowBlur=10;
+   ctx.shadowColor="#00aaff";
+   ctx.stroke();
+ });
+ // nodes
+ Object.keys(nodes).forEach(n=>{
+   ctx.beginPath();
+   ctx.arc(nodes[n].x,nodes[n].y,15,0,Math.PI*2);
+   ctx.fillStyle=selectedNodes.includes(n)?"#ff0044":"#bb66ff";
+   ctx.shadowBlur=20;
+   ctx.shadowColor=selectedNodes.includes(n)?"#ff0044":"#bb66ff";
+   ctx.fill();
+   ctx.font="14px Inter";
+   ctx.fillStyle="white";
+   ctx.fillText(n,nodes[n].x-40,nodes[n].y+30);
+ });
+}
+
+drawNodes();
+
+// DIJKSTRA
+function findPath(){
+ let start=startSelect.value;
+ let end=endSelect.value;
+ let unvisited = Object.keys(nodes);
+ let dist={}, prev={};
+ unvisited.forEach(n=>dist[n]=Infinity); dist[start]=0;
+
+ while(unvisited.length>0){
+   unvisited.sort((a,b)=>dist[a]-dist[b]);
+   let u=unvisited.shift();
+   if(u===end) break;
+   edges.forEach(e=>{
+     if(e[0]===u && unvisited.includes(e[1])){
+       let alt=dist[u]+e[2];
+       if(alt<dist[e[1]]){ dist[e[1]]=alt; prev[e[1]]=u; }
+     } else if(e[1]===u && unvisited.includes(e[0])){
+       let alt=dist[u]+e[2];
+       if(alt<dist[e[0]]){ dist[e[0]]=u; prev[e[0]]=u; }
+     }
+   });
+ }
+ // reconstruct path
+ let path=[], curr=end;
+ while(curr!==start){
+   path.unshift(curr);
+   curr=prev[curr];
+   if(curr===undefined) break;
+ }
+ if(curr) path.unshift(start);
+
+ // create edges for highlight
+ let pathEdges=[];
+ for(let i=0;i<path.length-1;i++) pathEdges.push([path[i],path[i+1]]);
+
+ drawNodes(path,pathEdges);
+}
+</script>
+
+</body>
+</html>

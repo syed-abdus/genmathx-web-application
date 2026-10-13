@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Differential Equations Lab</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{
+ margin:0;
+ font-family:Inter;
+ background:#050505;
+ color:white;
+ text-align:center;
+}
+h1{
+ margin-top:20px;
+ font-size:50px;
+ background:linear-gradient(90deg,#00aaff,#bb66ff,#ffd700);
+ -webkit-background-clip:text;
+ color:transparent;
+}
+.controls{
+ margin:20px;
+}
+input{
+ padding:10px;
+ border-radius:10px;
+ border:none;
+ outline:none;
+ margin:5px;
+}
+button{
+ padding:10px 20px;
+ border:none;
+ border-radius:10px;
+ cursor:pointer;
+ background:linear-gradient(90deg,#00aaff,#bb66ff);
+ color:white;
+ margin:5px;
+ transition:0.3s;
+}
+button:hover{
+ transform:scale(1.05);
+}
+canvas{
+ background:#111;
+ border-radius:20px;
+ margin-top:20px;
+}
+</style>
+</head>
+<body>
+
+<h1>Differential Equations Lab</h1>
+
+<div class="controls">
+Equation: dy/dt = <input type="text" id="eq" value="y*(1-y/10)" size="8">
+Initial y(0): <input type="number" id="y0" value="1" step="0.1">
+Time step Δt: <input type="number" id="dt" value="0.1" step="0.01">
+Max Time T: <input type="number" id="T" value="10" step="1">
+<button onclick="simulate()">Simulate</button>
+<button onclick="reset()">Reset</button>
+</div>
+
+<canvas id="chart" width="900" height="400"></canvas>
+
+<script>
+const ctx = document.getElementById('chart').getContext('2d');
+let chart = new Chart(ctx,{
+ type:'line',
+ data:{
+  labels:[],
+  datasets:[{
+   label:'y(t)',
+   data:[],
+   borderColor:'#00aaff',
+   backgroundColor:'rgba(0,150,255,0.2)',
+   fill:true,
+   tension:0.3
+  }]
+ },
+ options:{responsive:false, animation:{duration:0}, scales:{y:{beginAtZero:true}}}
+});
+
+let interval;
+
+function simulate(){
+ clearInterval(interval);
+ let y0=parseFloat(document.getElementById('y0').value);
+ let dt=parseFloat(document.getElementById('dt').value);
+ let T=parseFloat(document.getElementById('T').value);
+ let eq=document.getElementById('eq').value;
+ let y=y0;
+ let t=0;
+
+chart.data.labels=[];
+chart.data.datasets[0].data=[];
+
+interval=setInterval(()=>{
+ if(t>T){ clearInterval(interval); return; }
+ // evaluate f(y,t)
+ let f;
+ try{
+   f = eval(eq.replace(/y/g,'('+y+')').replace(/t/g,'('+t+')'));
+ }catch(e){
+   alert('Invalid equation'); clearInterval(interval); return;
+ }
+ y = y + f*dt;
+ chart.data.labels.push(t.toFixed(2));
+ chart.data.datasets[0].data.push(y);
+ chart.update();
+ t+=dt;
+},50);
+}
+
+function reset(){
+ clearInterval(interval);
+ chart.data.labels=[];
+ chart.data.datasets[0].data=[];
+ chart.update();
+}
+</script>
+
+</body>
+</html>

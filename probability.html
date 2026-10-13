@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Probability Simulator</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{
+ margin:0;
+ font-family:Inter;
+ background:#050505;
+ color:white;
+ text-align:center;
+}
+h1{
+ margin-top:20px;
+ background:linear-gradient(90deg,#00aaff,#bb66ff,#ffd700);
+ -webkit-background-clip:text;
+ color:transparent;
+}
+.controls{
+ margin:20px;
+}
+input, select{
+ padding:10px;
+ border-radius:10px;
+ border:none;
+ outline:none;
+ margin:5px;
+}
+button{
+ padding:10px 20px;
+ border:none;
+ border-radius:10px;
+ cursor:pointer;
+ background:linear-gradient(90deg,#00aaff,#bb66ff);
+ color:white;
+ margin:5px;
+ transition:0.3s;
+}
+button:hover{
+ transform:scale(1.05);
+}
+canvas{
+ background:#111;
+ border-radius:20px;
+ margin-top:20px;
+}
+</style>
+</head>
+<body>
+
+<h1>Probability Simulator</h1>
+
+<div class="controls">
+Event: 
+<select id="eventType">
+ <option value="dice">Dice</option>
+ <option value="coin">Coin</option>
+</select>
+
+Trials: <input type="number" id="trials" value="100" step="10">
+<button onclick="simulate()">Simulate</button>
+</div>
+
+<canvas id="chart" width="800" height="400"></canvas>
+
+<script>
+const ctx = document.getElementById('chart').getContext('2d');
+
+let chart = new Chart(ctx,{
+ type:'bar',
+ data:{
+  labels:['1','2','3','4','5','6'],
+  datasets:[{
+   label:'Outcomes',
+   data:[0,0,0,0,0,0],
+   backgroundColor:['#00aaff','#bb66ff','#ffd700','#ff0044','#aa00ff','#00ffaa'],
+   borderWidth:2,
+   borderColor:'rgba(255,255,255,0.5)',
+   hoverBorderWidth:3
+  }]
+ },
+ options:{
+  responsive:false,
+  scales:{
+   y:{beginAtZero:true},
+   x:{
+    grid:{display:false},
+    ticks:{color:'#ccc'}
+   }
+  },
+  plugins:{
+   legend:{display:false}
+  }
+ }
+});
+
+function simulate(){
+ let trials = parseInt(document.getElementById('trials').value);
+ let eventType = document.getElementById('eventType').value;
+ let results=[];
+ let labels=[];
+
+ if(eventType==='dice'){
+  results=[0,0,0,0,0,0];
+  labels=['1','2','3','4','5','6'];
+  for(let i=0;i<trials;i++){
+   let roll = Math.floor(Math.random()*6);
+   results[roll]++;
+  }
+  chart.data.datasets[0].backgroundColor=['#00aaff','#bb66ff','#ffd700','#ff0044','#aa00ff','#00ffaa'];
+}else{
+  results=[0,0];
+  labels=['Heads','Tails'];
+  for(let i=0;i<trials;i++){
+   let flip = Math.random()<0.5?0:1;
+   results[flip]++;
+  }
+  chart.data.datasets[0].backgroundColor=['#00aaff','#bb66ff'];
+}
+
+// Update chart with pseudo-3D effect
+chart.data.labels = labels;
+chart.data.datasets[0].data = results;
+chart.data.datasets[0].borderWidth = 3;
+chart.data.datasets[0].borderColor = 'rgba(255,255,255,0.7)';
+chart.update();
+}
+</script>
+
+</body>
+</html>
